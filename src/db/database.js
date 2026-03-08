@@ -72,6 +72,7 @@ db.executescript("""
     description      TEXT,
     notify_before    INTEGER DEFAULT 15,
     duration_minutes INTEGER DEFAULT 60,
+    notify_channels  TEXT DEFAULT '["discord_dm"]',
     status           TEXT DEFAULT 'scheduled',
     created_at       TEXT DEFAULT (datetime('now'))
   );
@@ -101,6 +102,10 @@ try:
     db.execute("ALTER TABLE friends ADD COLUMN notify_channel TEXT DEFAULT 'discord'")
 except Exception:
     pass
+try:
+    db.execute("""ALTER TABLE matches ADD COLUMN notify_channels TEXT DEFAULT '["discord_dm"]'""")
+except Exception:
+    pass
 db.commit()
 db.close()
 print('"ok"')
@@ -117,12 +122,12 @@ print(n)
 
 function seedDefaultGames() {
   const defaults = [
-    { name: 'Valorant',           emoji: '🔫', color: '#ff4655', bg_color: '#160506', description: 'FPS tático 5v5 da Riot Games' },
-    { name: 'League of Legends',  emoji: '⚔️',  color: '#c89b3c', bg_color: '#0a0c0e', description: 'MOBA clássico da Riot Games' },
-    { name: 'CS2',                emoji: '💣', color: '#f0a500', bg_color: '#0d0f0a', description: 'Counter-Strike 2 da Valve' },
-    { name: 'Apex Legends',       emoji: '🦾', color: '#cd4227', bg_color: '#100806', description: 'Battle Royale da Respawn' },
-    { name: 'Fortnite',           emoji: '🌀', color: '#00d4ff', bg_color: '#060b10', description: 'Battle Royale da Epic Games' },
-    { name: 'Minecraft',          emoji: '⛏️',  color: '#7fb238', bg_color: '#080e04', description: 'Sandbox da Mojang' },
+    { name: 'Valorant', emoji: '🔫', color: '#ff4655', bg_color: '#160506', description: 'FPS tático 5v5 da Riot Games' },
+    { name: 'League of Legends', emoji: '⚔️', color: '#c89b3c', bg_color: '#0a0c0e', description: 'MOBA clássico da Riot Games' },
+    { name: 'CS2', emoji: '💣', color: '#f0a500', bg_color: '#0d0f0a', description: 'Counter-Strike 2 da Valve' },
+    { name: 'Apex Legends', emoji: '🦾', color: '#cd4227', bg_color: '#100806', description: 'Battle Royale da Respawn' },
+    { name: 'Fortnite', emoji: '🌀', color: '#00d4ff', bg_color: '#060b10', description: 'Battle Royale da Epic Games' },
+    { name: 'Minecraft', emoji: '⛏️', color: '#7fb238', bg_color: '#080e04', description: 'Sandbox da Mojang' },
   ];
   defaults.forEach(g => createGame(g));
 }
@@ -151,8 +156,8 @@ function createGame(data) {
 db = conn()
 cur = db.execute(
   "INSERT INTO games (name,emoji,color,bg_color,description,image_url) VALUES (?,?,?,?,?,?)",
-  (${P(data.name||'')},${P(data.emoji||'🎮')},${P(data.color||'#5b8dee')},
-   ${P(data.bg_color||'#0c1018')},${P(data.description||'')},${P(data.image_url||'')})
+  (${P(data.name || '')},${P(data.emoji || '🎮')},${P(data.color || '#5b8dee')},
+   ${P(data.bg_color || '#0c1018')},${P(data.description || '')},${P(data.image_url || '')})
 )
 db.commit()
 row = db.execute("SELECT * FROM games WHERE id=?", (cur.lastrowid,)).fetchone()
@@ -166,8 +171,8 @@ function updateGame(id, data) {
 db = conn()
 db.execute(
   "UPDATE games SET name=?,emoji=?,color=?,bg_color=?,description=?,image_url=? WHERE id=?",
-  (${P(data.name||'')},${P(data.emoji||'🎮')},${P(data.color||'#5b8dee')},
-   ${P(data.bg_color||'#0c1018')},${P(data.description||'')},${P(data.image_url||'')},${+id})
+  (${P(data.name || '')},${P(data.emoji || '🎮')},${P(data.color || '#5b8dee')},
+   ${P(data.bg_color || '#0c1018')},${P(data.description || '')},${P(data.image_url || '')},${+id})
 )
 db.commit()
 row = db.execute("SELECT * FROM games WHERE id=?", (${+id},)).fetchone()
@@ -211,9 +216,9 @@ function createFriend(data) {
 db = conn()
 cur = db.execute(
   "INSERT INTO friends (nickname,display_name,discord_id,discord_webhook,email,whatsapp,notify_channel,avatar_color,notes) VALUES (?,?,?,?,?,?,?,?,?)",
-  (${P(data.nickname||'')},${P(data.display_name||'')},${P(data.discord_id||'')},
-   ${P(data.discord_webhook||'')},${P(data.email||'')},${P(data.whatsapp||'')},
-   ${P(data.notify_channel||'discord')},${P(data.avatar_color||'#5b8dee')},${P(data.notes||'')})
+  (${P(data.nickname || '')},${P(data.display_name || '')},${P(data.discord_id || '')},
+   ${P(data.discord_webhook || '')},${P(data.email || '')},${P(data.whatsapp || '')},
+   ${P(data.notify_channel || 'discord')},${P(data.avatar_color || '#5b8dee')},${P(data.notes || '')})
 )
 db.commit()
 row = db.execute("SELECT * FROM friends WHERE id=?", (cur.lastrowid,)).fetchone()
@@ -227,9 +232,9 @@ function updateFriend(id, data) {
 db = conn()
 db.execute(
   "UPDATE friends SET nickname=?,display_name=?,discord_id=?,discord_webhook=?,email=?,whatsapp=?,notify_channel=?,avatar_color=?,notes=? WHERE id=?",
-  (${P(data.nickname||'')},${P(data.display_name||'')},${P(data.discord_id||'')},
-   ${P(data.discord_webhook||'')},${P(data.email||'')},${P(data.whatsapp||'')},
-   ${P(data.notify_channel||'discord')},${P(data.avatar_color||'#5b8dee')},${P(data.notes||'')},${+id})
+  (${P(data.nickname || '')},${P(data.display_name || '')},${P(data.discord_id || '')},
+   ${P(data.discord_webhook || '')},${P(data.email || '')},${P(data.whatsapp || '')},
+   ${P(data.notify_channel || 'discord')},${P(data.avatar_color || '#5b8dee')},${P(data.notes || '')},${+id})
 )
 db.commit()
 row = db.execute("SELECT * FROM friends WHERE id=?", (${+id},)).fetchone()
@@ -302,9 +307,9 @@ function createMatch(data) {
   return py(`${H}
 db = conn()
 cur = db.execute(
-  "INSERT INTO matches (game_id,title,scheduled_at,platform,max_players,description,notify_before,duration_minutes) VALUES (?,?,?,?,?,?,?,?)",
-  (${+data.game_id||0},${P(data.title||'')},${P(data.scheduled_at||'')},
-   ${P(data.platform||'')},${+(data.max_players||0)},${P(data.description||'')},${+(data.notify_before||15)},${+(data.duration_minutes||60)})
+  "INSERT INTO matches (game_id,title,scheduled_at,platform,max_players,description,notify_before,duration_minutes,notify_channels) VALUES (?,?,?,?,?,?,?,?,?)",
+  (${+data.game_id || 0},${P(data.title || '')},${P(data.scheduled_at || '')},
+   ${P(data.platform || '')},${+(data.max_players || 0)},${P(data.description || '')},${+(data.notify_before || 15)},${+(data.duration_minutes || 60)},${P(JSON.stringify(data.notify_channels || ['discord_dm']))})
 )
 mid = cur.lastrowid
 for fid in ${fids}:
@@ -332,9 +337,9 @@ function updateMatch(id, data) {
   return py(`${H}
 db = conn()
 db.execute(
-  "UPDATE matches SET game_id=?,title=?,scheduled_at=?,platform=?,max_players=?,description=?,notify_before=?,duration_minutes=? WHERE id=?",
-  (${+data.game_id||0},${P(data.title||'')},${P(data.scheduled_at||'')},
-   ${P(data.platform||'')},${+(data.max_players||0)},${P(data.description||'')},${+(data.notify_before||15)},${+(data.duration_minutes||60)},${+id})
+  "UPDATE matches SET game_id=?,title=?,scheduled_at=?,platform=?,max_players=?,description=?,notify_before=?,duration_minutes=?,notify_channels=? WHERE id=?",
+  (${+data.game_id || 0},${P(data.title || '')},${P(data.scheduled_at || '')},
+   ${P(data.platform || '')},${+(data.max_players || 0)},${P(data.description || '')},${+(data.notify_before || 15)},${+(data.duration_minutes || 60)},${P(JSON.stringify(data.notify_channels || ['discord_dm']))},${+id})
 )
 friend_ids = ${fidsVal}
 if friend_ids is not None:
@@ -392,7 +397,7 @@ print(json.dumps(row["value"] if row else None))
 function setSetting(key, value) {
   py(`${H}
 db = conn()
-db.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (${P(key)},${P(String(value||''))}))
+db.execute("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)", (${P(key)},${P(String(value || ''))}))
 db.commit()
 db.close()
 print('"ok"')

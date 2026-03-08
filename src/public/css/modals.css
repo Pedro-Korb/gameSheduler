@@ -1,0 +1,167 @@
+/* ═══════════════ MODAL ═══════════════ */
+.overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(4,6,12,.82); backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem; opacity: 0; pointer-events: none;
+  transition: opacity .22s;
+}
+
+.overlay.show { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--s1); border: 1px solid var(--border2); border-radius: var(--r2);
+  width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0,0,0,.6), var(--glow);
+  transform: translateY(18px) scale(.97); transition: transform .22s;
+}
+
+.overlay.show .modal { transform: translateY(0) scale(1); }
+.modal.wide { max-width: 680px; }
+
+.modal-hdr {
+  padding: 1.3rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.modal-hdr h2 {
+  font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 700;
+  display: flex; align-items: center; gap: 9px;
+}
+
+.modal-body { padding: 1.4rem 1.5rem; }
+
+/* ═══════════════ FORM ═══════════════ */
+.fg { margin-bottom: 1.1rem; }
+.fg:last-child { margin-bottom: 0; }
+
+.fl {
+  display: block; margin-bottom: 5px;
+  font-size: .74rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--dim);
+}
+.fl .req { color: var(--danger); margin-left: 2px; }
+
+.fi, .fs, .fta {
+  width: 100%; padding: 9px 13px;
+  background: var(--s0); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text);
+  font-family: 'Exo 2', sans-serif; font-size: .88rem;
+  transition: border-color .18s, box-shadow .18s; outline: none;
+}
+
+.fi:focus, .fs:focus, .fta:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91,141,238,.15);
+}
+
+.fs {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath fill='%235b8dee' d='M.5 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 34px;
+}
+
+.fta { resize: vertical; min-height: 72px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-row .fg { margin-bottom: 0; }
+
+/* ═══════════════ GAME PICKER ═══════════════ */
+.game-picker-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem;
+  max-height: 200px; overflow-y: auto; padding-right: 4px;
+}
+
+.gp-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: .6rem .3rem; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--s0);
+  cursor: pointer; transition: all .18s; text-align: center;
+}
+
+.gp-item:hover { border-color: rgba(91,141,238,.4); background: rgba(91,141,238,.06); }
+.gp-item.sel { border-color: var(--accent); background: rgba(91,141,238,.12); box-shadow: var(--glow); }
+.gp-item .gpi-emoji { font-size: 1.5rem; }
+.gp-item .gpi-name { font-size: .62rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.gp-item.sel .gpi-name { color: var(--accent); }
+
+/* ═══════════════ FRIENDS PICKER ═══════════════ */
+.friends-picker { display: flex; flex-direction: column; gap: .4rem; max-height: 200px; overflow-y: auto; padding-right: 4px; }
+
+.fp-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: .5rem .75rem; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--s0);
+  cursor: pointer; transition: all .18s;
+}
+
+.fp-item:hover { border-color: rgba(91,141,238,.4); }
+.fp-item.sel { border-color: var(--accent); background: rgba(91,141,238,.1); }
+
+.fp-check {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  border: 2px solid var(--border2); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; transition: all .18s;
+}
+
+.fp-item.sel .fp-check { background: var(--accent); border-color: var(--accent); }
+.fp-nick { font-weight: 700; font-size: .88rem; }
+.fp-name { font-size: .75rem; color: var(--dim); margin-left: auto; }
+
+/* ═══════════════ NOTIFY OPTIONS ═══════════════ */
+.notify-opts { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+.notify-opt {
+  padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: .73rem; font-weight: 700;
+  cursor: pointer; transition: all .18s; font-family: 'Exo 2', sans-serif;
+}
+
+.notify-opt:hover { border-color: var(--accent); color: var(--accent); }
+.notify-opt.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ═══════════════ COLOR PICKER ═══════════════ */
+.color-swatches { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+.swatch {
+  width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: transform .15s;
+}
+
+.swatch:hover { transform: scale(1.15); }
+.swatch.sel { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.4); }
+
+/* ═══════════════ CHANNEL CHIPS ═══════════════ */
+.channel-chips { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+.channel-chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--s0);
+  color: var(--muted); font-family: 'Exo 2', sans-serif;
+  font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+}
+
+.channel-chip:hover { border-color: rgba(88,101,242,.5); color: var(--text); }
+.channel-chip.sel {
+  background: rgba(88,101,242,.15); border-color: rgba(88,101,242,.5);
+  color: #7289da; box-shadow: 0 0 12px rgba(88,101,242,.15);
+}
+.ch-icon { font-size: 1.1rem; }
+.ch-label { white-space: nowrap; }
+
+/* ═══════════════ DISCORD STATUS ═══════════════ */
+.discord-status {
+  padding: .6rem .9rem; border-radius: var(--r);
+  font-size: .78rem; border: 1px solid; display: flex; align-items: center; gap: 7px;
+  margin-top: .6rem;
+}
+
+.discord-status.ok   { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.3); color: var(--success); }
+.discord-status.err  { background: rgba(240,68,68,.08);  border-color: rgba(240,68,68,.3);  color: var(--danger); }
+.discord-status.info { background: rgba(91,141,238,.08); border-color: rgba(91,141,238,.2); color: var(--accent); }

@@ -1,7 +1,8 @@
 /**
  * services/notifications.js
  * Envia convites/notificações via Discord Webhook.
- * Fallback: log no console + simula resposta amigável.
+ * Suporta dois modos: Discord DM (por amigo) e Servidor Discord (uma msg global).
+ * Fallback: log no console.
  */
 
 const https = require('https');
@@ -46,6 +47,9 @@ function buildMatchEmbed(match, friend, type = 'invite') {
     ? `⏰ A partida começa em **${match.notify_before} minutos**! Hora de se preparar!`
     : `Você foi convidado por **${match.owner || 'seu amigo'}** para uma partida!`;
 
+  const durationMin = match.duration_minutes || 60;
+  const durationStr = durationMin >= 60 ? `${Math.floor(durationMin/60)}h${durationMin%60 ? durationMin%60 + 'min' : ''}` : `${durationMin}min`;
+
   const embed = {
     title: `${match.game_emoji || '🎮'} ${match.title}`,
     description,
@@ -55,6 +59,7 @@ function buildMatchEmbed(match, friend, type = 'invite') {
       { name: '📅 Data',       value: dateStr,                     inline: true  },
       { name: '⏰ Horário',    value: timeStr,                     inline: true  },
       { name: '🖥️ Plataforma', value: match.platform || 'N/A',    inline: true  },
+      { name: '⏱️ Duração',    value: durationStr,                 inline: true  },
       ...(match.max_players ? [{ name: '👥 Jogadores', value: `${match.max_players}`, inline: true }] : []),
       ...(match.description  ? [{ name: '📝 Obs', value: match.description, inline: false }] : []),
     ],
@@ -70,7 +75,50 @@ function buildMatchEmbed(match, friend, type = 'invite') {
   return { content, embeds: [embed] };
 }
 
-// ── Notify a single friend ────────────────────────────────────────────────────
+// ── Build server embed (one message mentioning all friends) ───────────────────
+function buildServerEmbed(match, friends, type = 'invite') {
+  const dt = new Date(match.scheduled_at);
+  const dateStr = dt.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+  const isReminder = type === 'reminder';
+  const color = isReminder ? 0xf59e0b : parseInt((match.game_color || '#6366f1').replace('#', ''), 16);
+
+  const mentions = friends.map(f => f.discord_id ? `<@${f.discord_id}>` : `**@${f.nickname}**`).join(' ');
+
+  const description = isReminder
+    ? `⏰ A partida começa em **${match.notify_before} minutos**! Hora de se preparar!`
+    : `Nova partida agendada! Convocados: ${mentions}`;
+
+  const durationMin = match.duration_minutes || 60;
+  const durationStr = durationMin >= 60 ? `${Math.floor(durationMin/60)}h${durationMin%60 ? durationMin%60 + 'min' : ''}` : `${durationMin}min`;
+
+  const embed = {
+    title: `${match.game_emoji || '🎮'} ${match.title}`,
+    description,
+    color,
+    fields: [
+      { name: '🎮 Jogo',       value: match.game_name || 'N/A',   inline: true  },
+      { name: '📅 Data',       value: dateStr,                     inline: true  },
+      { name: '⏰ Horário',    value: timeStr,                     inline: true  },
+      { name: '🖥️ Plataforma', value: match.platform || 'N/A',    inline: true  },
+      { name: '⏱️ Duração',    value: durationStr,                 inline: true  },
+      ...(match.max_players ? [{ name: '👥 Jogadores', value: `${match.max_players}`, inline: true }] : []),
+      { name: '👥 Convocados', value: friends.map(f => `@${f.nickname}`).join(', '), inline: false },
+      ...(match.description  ? [{ name: '📝 Obs', value: match.description, inline: false }] : []),
+    ],
+    footer: { text: 'GG Schedule • Agendador de Partidas' },
+    timestamp: new Date().toISOString(),
+  };
+
+  const content = isReminder
+    ? `${mentions} 🔔 Lembrete: partida começa em breve!`
+    : `${mentions} 🎮 Nova partida agendada!`;
+
+  return { content, embeds: [embed] };
+}
+
+// ── Notify a single friend (Discord DM) ──────────────────────────────────────
 async function notifyFriend(match, friend, type = 'invite') {
   const result = { friendId: friend.id, nickname: friend.nickname, success: false, method: null, error: null };
 
@@ -82,7 +130,7 @@ async function notifyFriend(match, friend, type = 'invite') {
       const payload = buildMatchEmbed(match, friend, type);
       const res = await sendDiscordWebhook(webhookUrl, payload);
       result.success = res.status >= 200 && res.status < 300;
-      result.method  = 'discord_webhook';
+      result.method  = 'discord_dm';
       if (!result.success) result.error = `HTTP ${res.status}`;
     } catch (err) {
       result.error = err.message;
@@ -97,12 +145,73 @@ async function notifyFriend(match, friend, type = 'invite') {
   return result;
 }
 
-// ── Notify all friends of a match ─────────────────────────────────────────────
-async function notifyMatchFriends(match, type = 'invite') {
-  if (!match.friends?.length) return [];
-  const results = await Promise.all(match.friends.map(f => notifyFriend(match, f, type)));
-  console.log(`[NOTIFY] ${type} results:`, results.map(r => `${r.nickname}:${r.success?'✓':'✗'}`).join(', '));
-  return results;
+// ── Notify via server channel (one message) ──────────────────────────────────
+async function notifyServer(match, friends, type = 'invite') {
+  const webhookUrl = (await getSetting('discord_webhook'))?.trim();
+
+  if (!webhookUrl) {
+    console.log(`[NOTIFY-SERVER] ${type.toUpperCase()} | ${match.title} | ${friends.length} amigos | Sem webhook global`);
+    return friends.map(f => ({
+      friendId: f.id, nickname: f.nickname, success: true, method: 'console_log', error: null
+    }));
+  }
+
+  try {
+    const payload = buildServerEmbed(match, friends, type);
+    const res = await sendDiscordWebhook(webhookUrl, payload);
+    const success = res.status >= 200 && res.status < 300;
+    console.log(`[NOTIFY-SERVER] ${type} → Servidor Discord | ${success ? '✓' : '✗'} | ${friends.length} mencionados`);
+    return friends.map(f => ({
+      friendId: f.id, nickname: f.nickname, success, method: 'discord_server', error: success ? null : `HTTP ${res.status}`
+    }));
+  } catch (err) {
+    return friends.map(f => ({
+      friendId: f.id, nickname: f.nickname, success: false, method: 'discord_server', error: err.message
+    }));
+  }
 }
 
-module.exports = { notifyFriend, notifyMatchFriends, buildMatchEmbed };
+// ── Notify all friends of a match (respecting channels) ──────────────────────
+async function notifyMatchFriends(match, type = 'invite') {
+  if (!match.friends?.length) return [];
+
+  // Parse notify_channels from match
+  let channels;
+  try {
+    channels = typeof match.notify_channels === 'string' ? JSON.parse(match.notify_channels) : (match.notify_channels || ['discord_dm']);
+  } catch { channels = ['discord_dm']; }
+
+  let allResults = [];
+
+  // Discord DM — send individually to each friend
+  if (channels.includes('discord_dm')) {
+    const dmResults = await Promise.all(match.friends.map(f => notifyFriend(match, f, type)));
+    allResults.push(...dmResults);
+    console.log(`[NOTIFY] DM ${type} results:`, dmResults.map(r => `${r.nickname}:${r.success?'✓':'✗'}`).join(', '));
+  }
+
+  // Discord Server — send one message with all mentions
+  if (channels.includes('discord_server')) {
+    const serverResults = await notifyServer(match, match.friends, type);
+    console.log(`[NOTIFY] Server ${type}: ${serverResults[0]?.success ? '✓' : '✗'} (${match.friends.length} mencionados)`);
+    if (!channels.includes('discord_dm')) {
+      // Only add server results if DM was not also sent (avoid duplicate entries per friend)
+      allResults.push(...serverResults);
+    } else {
+      // Both channels: merge server success into existing DM results so markNotified fires
+      serverResults.forEach(sr => {
+        const existing = allResults.find(r => r.friendId === sr.friendId);
+        if (existing) {
+          // Mark as success if either channel succeeded
+          existing.success = existing.success || sr.success;
+        } else {
+          allResults.push(sr);
+        }
+      });
+    }
+  }
+
+  return allResults;
+}
+
+module.exports = { notifyFriend, notifyMatchFriends, notifyServer, buildMatchEmbed, buildServerEmbed };

@@ -47,6 +47,19 @@ npm test -- --testPathPattern=App  # Run a single test file
 ### React frontend
 `src/App.js` is the default CRA placeholder. The actual UI is the self-contained `src/public/index.html` served by the backend.
 
+### Frontend SPA (`src/public/js/`)
+The UI is a vanilla ES Module SPA. `src/public/js/app.js` is the sole `<script type="module">` entry point — it imports all modules and exposes their functions on `window.*` for inline `onclick` handlers in the HTML.
+
+Module layout:
+- **`api.js`** — fetch wrappers; `loadAll()` refreshes all data from the backend.
+- **`state.js`** — shared in-memory state (games, friends, matches lists).
+- **`events.js`** — global DOM event listeners (tabs, keyboard, etc.).
+- **`notifications.js`** — browser `Notification` API + clock that periodically calls `loadAll`.
+- **`toast.js`** — toast notification helpers.
+- **`settings.js`** — settings panel save/test-webhook logic.
+- **`render/`** — one file per entity (`games.js`, `friends.js`, `matches.js`) plus `index.js` that re-exports them; each renders its card list into the DOM.
+- **`modals/`** — one file per entity (`game-modal.js`, `friend-modal.js`, `match-modal.js`) plus `shared.js` with `closeModal()`.
+
 ## Key Conventions
 
 - **DB access pattern**: All queries in `database.js` use the shared Python header `H` (defines `conn()` with row_factory) prepended to each inline Python script. Parameters are interpolated directly via `JSON.stringify` — not parameterized at the JS level.

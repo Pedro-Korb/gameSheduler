@@ -5,17 +5,17 @@ Agendador de partidas online com cadastro de jogos, amigos e notificações auto
 ## 🚀 Início Rápido
 
 ```bash
-node server.js
+node src/server.js
 ```
 
-> Requisitos: Node.js 16+ e Python
+> Requisitos: Node.js 16+ e Python 3 no PATH
 
 ---
 
 ## 📁 Estrutura
 
 ```
-gg-schedule/
+src/
 ├── server.js                  # Servidor HTTP principal
 ├── db/
 │   ├── database.js            # Camada de dados (SQLite via Python)
@@ -26,7 +26,18 @@ gg-schedule/
 ├── routes/
 │   └── api.js                 # Rotas REST
 └── public/
-    └── index.html             # SPA completa (HTML/CSS/JS)
+    ├── index.html             # HTML da SPA
+    ├── css/                   # Estilos (base, components, modals, animations)
+    └── js/
+        ├── app.js             # Entry point (ES Module); expõe handlers no window.*
+        ├── api.js             # Fetch wrappers e loadAll()
+        ├── state.js           # Estado em memória (games, friends, matches)
+        ├── events.js          # Listeners globais (tabs, teclado)
+        ├── notifications.js   # Web Notifications API + clock
+        ├── settings.js        # Painel de configurações
+        ├── toast.js           # Toasts de feedback
+        ├── render/            # Renderização por entidade (games, friends, matches)
+        └── modals/            # Modais por entidade + shared.js
 ```
 
 ---
@@ -52,12 +63,17 @@ gg-schedule/
 - 6 jogos pré-cadastrados (Valorant, LoL, CS2, Apex, Fortnite, Minecraft)
 
 ### 🔔 Notificações Discord
-- **Webhook por amigo**: cada amigo pode ter seu webhook pessoal (canal/DM próprio)
-- **Webhook global**: fallback para quem não tem webhook configurado
+- **Canais configuráveis por partida**: escolha entre *Discord DM* (webhook individual por amigo) e/ou *Canal de servidor* (uma mensagem global mencionando todos)
+- **Webhook por amigo**: cada amigo pode ter seu webhook pessoal, usado com prioridade no canal DM
+- **Webhook global**: fallback para DM sem webhook próprio; único canal usado no modo servidor
 - **Convite automático**: ao criar partida, todos os amigos selecionados recebem embed rico no Discord
-- **Lembrete automático**: timer dispara X minutos antes da partida
+- **Lembrete automático**: timer dispara X minutos antes da partida (só cobre as próximas 24h; rescan a cada 30 min)
 - **Botão manual "Notificar"**: no card de cada partida para reenvio
 - Sem Discord configurado? O convite é logado no console.
+
+### 🌐 Notificações do navegador
+- Solicita permissão de *Web Notifications* automaticamente ao abrir
+- Relógio ao vivo no header com atualização periódica dos dados em background
 
 ---
 
