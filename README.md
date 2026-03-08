@@ -1,70 +1,99 @@
-# Getting Started with Create React App
+# 🎮 GG Schedule v2.0
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Agendador de partidas online com cadastro de jogos, amigos e notificações automáticas via Discord.
 
-## Available Scripts
+## 🚀 Início Rápido
 
-In the project directory, you can run:
+```bash
+node server.js
+```
 
-### `npm start`
+Acesse: **http://localhost:3000**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+> Requisitos: Node.js 16+ e Python 3 (ambos já vêm no sistema — sem `npm install`!)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 📁 Estrutura
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+gg-schedule/
+├── server.js                  # Servidor HTTP principal
+├── db/
+│   ├── database.js            # Camada de dados (SQLite via Python)
+│   └── scheduler.db           # Banco SQLite (criado automaticamente)
+├── services/
+│   ├── notifications.js       # Discord webhook + fallback
+│   └── scheduler.js           # Timers automáticos de notificação
+├── routes/
+│   └── api.js                 # Rotas REST
+└── public/
+    └── index.html             # SPA completa (HTML/CSS/JS)
+```
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## ✨ Funcionalidades
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 🗓️ Partidas
+- Criar, editar e excluir agendamentos
+- Selecionar jogo do catálogo
+- Escolher amigos cadastrados para convidar
+- Configurar notificação antecipada (5, 15, 30, 60 min)
+- Contagem regressiva ao vivo nos cards
+- Filtros: Todos / Próximos / Hoje / Passados
+- Envio automático de convites ao criar partida
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 👥 Amigos
+- Cadastro com nickname, nome, Discord ID, webhook pessoal, e-mail e notas
+- Cor de avatar personalizável
+- Usado para seleção nos convites
 
-### `npm run eject`
+### 🎮 Jogos
+- Catálogo personalizado com emoji, nome, cor temática, URL de imagem e descrição
+- 6 jogos pré-cadastrados (Valorant, LoL, CS2, Apex, Fortnite, Minecraft)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 🔔 Notificações Discord
+- **Webhook por amigo**: cada amigo pode ter seu webhook pessoal (canal/DM próprio)
+- **Webhook global**: fallback para quem não tem webhook configurado
+- **Convite automático**: ao criar partida, todos os amigos selecionados recebem embed rico no Discord
+- **Lembrete automático**: timer dispara X minutos antes da partida
+- **Botão manual "Notificar"**: no card de cada partida para reenvio
+- Sem Discord configurado? O convite é logado no console.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🔔 Configurar Discord
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Criar um Webhook
 
-## Learn More
+1. No Discord, vá em **Configurações do Servidor → Integrações → Webhooks**
+2. Clique em **Novo Webhook**
+3. Escolha o canal e copie a URL
+4. Cole em **Configurações → Webhook Global** (ou no campo do amigo)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Por amigo (recomendado)
+Cada amigo pode ter seu próprio webhook — assim a notificação vai direto para o canal deles.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 🛠️ API REST
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /api/games | Lista jogos |
+| POST | /api/games | Cria jogo |
+| PUT | /api/games/:id | Edita jogo |
+| DELETE | /api/games/:id | Remove jogo |
+| GET | /api/friends | Lista amigos |
+| POST | /api/friends | Cria amigo |
+| PUT | /api/friends/:id | Edita amigo |
+| DELETE | /api/friends/:id | Remove amigo |
+| GET | /api/matches | Lista partidas |
+| POST | /api/matches | Cria partida (envia convites) |
+| PUT | /api/matches/:id | Edita partida |
+| DELETE | /api/matches/:id | Remove partida |
+| POST | /api/matches/:id/notify | Envia notificação manual |
+| GET | /api/settings | Configurações |
+| POST | /api/settings | Salva configurações |
+| POST | /api/test-notify | Testa webhook |
