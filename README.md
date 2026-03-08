@@ -8,9 +8,7 @@ Agendador de partidas online com cadastro de jogos, amigos e notificações auto
 node server.js
 ```
 
-Acesse: **http://localhost:3000**
-
-> Requisitos: Node.js 16+ e Python 3 (ambos já vêm no sistema — sem `npm install`!)
+> Requisitos: Node.js 16+ e Python
 
 ---
 
