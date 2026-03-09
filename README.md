@@ -8,7 +8,7 @@ Agendador de partidas online com cadastro de jogos, amigos e notificações auto
 node src/server.js
 ```
 
-> Requisitos: Node.js 16+ e Python 3 no PATH
+> Requisitos: Node.js 16+ e Python no PATH
 
 ---
 
