@@ -1,3 +1,7 @@
+***VIBE CODING TESTE #1***
+<br>
+<br>
+<br>
 # 🎮 GG Schedule v2.0
 
 Agendador de partidas online com cadastro de jogos, amigos e notificações automáticas via Discord.
