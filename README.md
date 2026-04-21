@@ -91,7 +91,7 @@ src/
 4. Cole em **Configurações → Webhook Global** (ou no campo do amigo)
 
 ### Por amigo (recomendado)
-Cada amigo pode ter seu próprio webhook — assim a notificação vai direto para o canal deles.
+Cada amigo pode ter seu próprio webhook
 
 ---
 
